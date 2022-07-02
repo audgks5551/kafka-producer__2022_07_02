@@ -9,7 +9,7 @@ import java.util.Properties;
 
 public class SimpleProducer {
     private final static Logger logger = LoggerFactory.getLogger(SimpleProducer.class);
-    private final static String TOPIC_NAME = "test";
+    private final static String TOPIC_NAME = "test1";
     private final static String BOOTSTRAP_SERVERS = "public.itseasy.site:10006";
 
     public static void main(String[] args) {
@@ -30,11 +30,28 @@ public class SimpleProducer {
 
         KafkaProducer<String, String> producer = new KafkaProducer<>(configs);
 
-        String messageValue = "hello";
+        int partitionNo = 0;
+        String keyValue = "key1";
+        String messageValue = "MessageWithoutKey";
+        
+        /**
+         * 키없이 레코드 생성
+         */
         ProducerRecord<String, String> record = new ProducerRecord<>(TOPIC_NAME, messageValue);
         producer.send(record);
 
+        /**
+         * 키가 있는 레코드 생성
+         */
+        ProducerRecord<String, String> recordWithKey = new ProducerRecord<>(TOPIC_NAME, keyValue, "keyMessage");
+        producer.send(recordWithKey);
+
+        ProducerRecord<String, String> recordWithKeyAndPartitionNo = new ProducerRecord<>(TOPIC_NAME, partitionNo, keyValue, "partitionMessage");
+        producer.send(recordWithKeyAndPartitionNo);
+
         logger.info("{}", record);
+        logger.info("{}", recordWithKey);
+        logger.info("{}", recordWithKeyAndPartitionNo);
 
         producer.flush();
         producer.close();
