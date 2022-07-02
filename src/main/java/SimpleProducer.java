@@ -27,6 +27,10 @@ public class SimpleProducer {
                 ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
                 StringSerializer.class.getName()
         );
+        configs.put(
+                ProducerConfig.PARTITIONER_CLASS_CONFIG,
+                CustomPartitioner.class
+        );
 
         KafkaProducer<String, String> producer = new KafkaProducer<>(configs);
 
@@ -46,12 +50,22 @@ public class SimpleProducer {
         ProducerRecord<String, String> recordWithKey = new ProducerRecord<>(TOPIC_NAME, keyValue, "keyMessage");
         producer.send(recordWithKey);
 
+        /**
+         * 파티션 번화와 키가 있는 레코드 생성
+         */
         ProducerRecord<String, String> recordWithKeyAndPartitionNo = new ProducerRecord<>(TOPIC_NAME, partitionNo, keyValue, "partitionMessage");
         producer.send(recordWithKeyAndPartitionNo);
+
+        /**
+         * 커스텀 파티셔너를 통해 레코드를 파티션 0번에 전송
+         */
+        ProducerRecord<String, String> recordWithCustomPartitioner = new ProducerRecord<>(TOPIC_NAME, "PartitionNo0", "partitionMessage");
+        producer.send(recordWithCustomPartitioner);
 
         logger.info("{}", record);
         logger.info("{}", recordWithKey);
         logger.info("{}", recordWithKeyAndPartitionNo);
+        logger.info("{}", recordWithCustomPartitioner);
 
         producer.flush();
         producer.close();
