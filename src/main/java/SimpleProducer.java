@@ -1,18 +1,20 @@
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 public class SimpleProducer {
     private final static Logger logger = LoggerFactory.getLogger(SimpleProducer.class);
     private final static String TOPIC_NAME = "test1";
     private final static String BOOTSTRAP_SERVERS = "public.itseasy.site:10006";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
 
         Properties configs = new Properties();
         configs.put(
@@ -30,6 +32,10 @@ public class SimpleProducer {
         configs.put(
                 ProducerConfig.PARTITIONER_CLASS_CONFIG,
                 CustomPartitioner.class
+        );
+        configs.put(
+                ProducerConfig.ACKS_CONFIG,
+                "1"
         );
 
         KafkaProducer<String, String> producer = new KafkaProducer<>(configs);
@@ -62,12 +68,24 @@ public class SimpleProducer {
         ProducerRecord<String, String> recordWithCustomPartitioner = new ProducerRecord<>(TOPIC_NAME, "PartitionNo0", "partitionMessage");
         producer.send(recordWithCustomPartitioner);
 
-        logger.info("{}", record);
-        logger.info("{}", recordWithKey);
-        logger.info("{}", recordWithKeyAndPartitionNo);
-        logger.info("{}", recordWithCustomPartitioner);
+        /**
+         * 레코드 전송 결과 확인
+         */
+        ProducerRecord<String, String> recordWithResultValue = new ProducerRecord<>(TOPIC_NAME, "resultValue", "partitionMessage");
+        try {
+            RecordMetadata metadata = producer.send(recordWithResultValue).get();
+            logger.info(metadata.toString());
 
-        producer.flush();
-        producer.close();
+            logger.info("{}", record);
+            logger.info("{}", recordWithKey);
+            logger.info("{}", recordWithKeyAndPartitionNo);
+            logger.info("{}", recordWithCustomPartitioner);
+            logger.info("{}", recordWithResultValue);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        } finally {
+            producer.flush();
+            producer.close();
+        }
     }
 }
